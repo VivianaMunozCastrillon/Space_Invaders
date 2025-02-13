@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport", content="width=device-width, initial-scale=1.0">
-        <title>Space Invaders</title>
-        <link rel="stylesheet" href="space.css">
-        <script src="space.js"></script>
-    </head>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders</title>
+    <link rel="stylesheet" href="space.css">
+    <script src="space.js" defer></script>
+</head>
+<body>
+    <h1>Space Invaders</h1>
+    <canvas id="board"></canvas>
+    <p id="score">Score: 0</p>
 
-    <body>
-        <h1>Space Invaders</h1>
-        <canvas id="board"></canvas>
-    </body>
+    <div id="controls">
+        <button id="leftBtn">⬅️</button>
+        <button id="shootBtn">🔥</button>
+        <button id="rightBtn">➡️</button>
+    </div>
+</body>
 </html>

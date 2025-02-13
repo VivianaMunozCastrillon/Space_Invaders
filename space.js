@@ -1,209 +1,208 @@
-//board
+// Configuración del tablero
 let tileSize = 32;
 let rows = 16;
 let columns = 16;
 
-let board;
-let boardWidth = tileSize * columns; // 32 * 16
-let boardHeight = tileSize * rows; // 32 * 16
-let context;
+let board, context;
+let boardWidth = tileSize * columns;
+let boardHeight = tileSize * rows;
 
-//ship
-let shipWidth = tileSize*2;
+// Configuración de la nave
+let shipWidth = tileSize * 2;
 let shipHeight = tileSize;
-let shipX = tileSize * columns/2 - tileSize;
-let shipY = tileSize * rows - tileSize*2;
+let shipX = (tileSize * columns) / 2 - tileSize;
+let shipY = tileSize * rows - tileSize * 2;
+let shipVelocityX = tileSize;
 
-let ship = {
-    x : shipX,
-    y : shipY,
-    width : shipWidth,
-    height : shipHeight
-}
+let ship = { x: shipX, y: shipY, width: shipWidth, height: shipHeight };
 
-let shipImg;
-let shipVelocityX = tileSize; //ship moving speed
+let shipImg = new Image();
+shipImg.src = "./ship.png";
 
-//aliens
+// Configuración de los aliens
 let alienArray = [];
-let alienWidth = tileSize*2;
+let alienWidth = tileSize * 2;
 let alienHeight = tileSize;
 let alienX = tileSize;
 let alienY = tileSize;
-let alienImg;
+let alienVelocityX = 1;
 
 let alienRows = 2;
 let alienColumns = 3;
-let alienCount = 0; //number of aliens to defeat
-let alienVelocityX = 1; //alien moving speed
+let alienCount = 0;
+let alienImg = new Image();
+alienImg.src = "./alien.png";
 
-//bullets
+// Configuración de las balas
 let bulletArray = [];
-let bulletVelocityY = -10; //bullet moving speed
+let bulletVelocityY = -10;
 
 let score = 0;
 let gameOver = false;
 
-window.onload = function() {
+window.onload = function () {
     board = document.getElementById("board");
     board.width = boardWidth;
     board.height = boardHeight;
-    context = board.getContext("2d"); //used for drawing on the board
+    context = board.getContext("2d");
 
-    //draw initial ship
-    // context.fillStyle="green";
-    // context.fillRect(ship.x, ship.y, ship.width, ship.height);
-
-    //load images
-    shipImg = new Image();
-    shipImg.src = "./ship.png";
-    shipImg.onload = function() {
+    shipImg.onload = function () {
         context.drawImage(shipImg, ship.x, ship.y, ship.width, ship.height);
-    }
+    };
 
-    alienImg = new Image();
-    alienImg.src = "./alien.png";
     createAliens();
-
     requestAnimationFrame(update);
+
     document.addEventListener("keydown", moveShip);
     document.addEventListener("keyup", shoot);
-}
+
+    // Controles táctiles
+    document.getElementById("leftBtn").addEventListener("click", () => moveShip({ code: "ArrowLeft" }));
+    document.getElementById("rightBtn").addEventListener("click", () => moveShip({ code: "ArrowRight" }));
+    document.getElementById("shootBtn").addEventListener("click", () => shoot({ code: "Space" }));
+
+    document.getElementById("leftBtn").addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        moveShip({ code: "ArrowLeft" });
+    });
+    document.getElementById("rightBtn").addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        moveShip({ code: "ArrowRight" });
+    });
+    document.getElementById("shootBtn").addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        shoot({ code: "Space" });
+    });
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+};
 
 function update() {
+    if (gameOver) return;
     requestAnimationFrame(update);
-
-    if (gameOver) {
-        return;
-    }
 
     context.clearRect(0, 0, board.width, board.height);
 
-    //ship
     context.drawImage(shipImg, ship.x, ship.y, ship.width, ship.height);
 
-    //alien
-    for (let i = 0; i < alienArray.length; i++) {
-        let alien = alienArray[i];
+    for (let alien of alienArray) {
         if (alien.alive) {
             alien.x += alienVelocityX;
-
-            //if alien touches the borders
             if (alien.x + alien.width >= board.width || alien.x <= 0) {
                 alienVelocityX *= -1;
-                alien.x += alienVelocityX*2;
-
-                //move all aliens up by one row
-                for (let j = 0; j < alienArray.length; j++) {
-                    alienArray[j].y += alienHeight;
-                }
+                alien.x += alienVelocityX * 2;
+                alienArray.forEach(al => al.y += alienHeight);
             }
             context.drawImage(alienImg, alien.x, alien.y, alien.width, alien.height);
-
-            if (alien.y >= ship.y) {
-                gameOver = true;
-            }
+            if (alien.y >= ship.y) gameOver = true; // Fin del juego
         }
     }
 
-    //bullets
-    for (let i = 0; i < bulletArray.length; i++) {
-        let bullet = bulletArray[i];
+    for (let bullet of bulletArray) {
         bullet.y += bulletVelocityY;
-        context.fillStyle="white";
+        context.fillStyle = "white";
         context.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
 
-        //bullet collision with aliens
-        for (let j = 0; j < alienArray.length; j++) {
-            let alien = alienArray[j];
+        for (let alien of alienArray) {
             if (!bullet.used && alien.alive && detectCollision(bullet, alien)) {
                 bullet.used = true;
                 alien.alive = false;
                 alienCount--;
                 score += 100;
+                document.getElementById("score").innerText = "Score: " + score;
             }
         }
     }
 
-    //clear bullets
-    while (bulletArray.length > 0 && (bulletArray[0].used || bulletArray[0].y < 0)) {
-        bulletArray.shift(); //removes the first element of the array
-    }
+    bulletArray = bulletArray.filter(b => !b.used && b.y > 0);
 
-    //next level
     if (alienCount == 0) {
-        //increase the number of aliens in columns and rows by 1
-        score += alienColumns * alienRows * 100; //bonus points :)
-        alienColumns = Math.min(alienColumns + 1, columns/2 -2); //cap at 16/2 -2 = 6
-        alienRows = Math.min(alienRows + 1, rows-4);  //cap at 16-4 = 12
-        if (alienVelocityX > 0) {
-            alienVelocityX += 0.2; //increase the alien movement speed towards the right
-        }
-        else {
-            alienVelocityX -= 0.2; //increase the alien movement speed towards the left
-        }
-        alienArray = [];
-        bulletArray = [];
-        createAliens();
+        nextLevel();
     }
 
-    //score
-    context.fillStyle="white";
-    context.font="16px courier";
-    context.fillText(score, 5, 20);
+    if (gameOver) {
+        displayGameOver();
+    }
 }
 
 function moveShip(e) {
-    if (gameOver) {
-        return;
+    if (gameOver) return;
+    if (e.code === "ArrowLeft" && ship.x - shipVelocityX >= 0) {
+        ship.x -= shipVelocityX;
+    } else if (e.code === "ArrowRight" && ship.x + shipVelocityX + ship.width <= board.width) {
+        ship.x += shipVelocityX;
     }
+}
 
-    if (e.code == "ArrowLeft" && ship.x - shipVelocityX >= 0) {
-        ship.x -= shipVelocityX; //move left one tile
-    }
-    else if (e.code == "ArrowRight" && ship.x + shipVelocityX + ship.width <= board.width) {
-        ship.x += shipVelocityX; //move right one tile
+function shoot(e) {
+    if (gameOver) return;
+    if (e.code === "Space") {
+        bulletArray.push({
+            x: ship.x + shipWidth * 15 / 32,
+            y: ship.y,
+            width: tileSize / 8,
+            height: tileSize / 2,
+            used: false
+        });
     }
 }
 
 function createAliens() {
+    alienArray = [];
     for (let c = 0; c < alienColumns; c++) {
         for (let r = 0; r < alienRows; r++) {
-            let alien = {
-                img : alienImg,
-                x : alienX + c*alienWidth,
-                y : alienY + r*alienHeight,
-                width : alienWidth,
-                height : alienHeight,
-                alive : true
-            }
-            alienArray.push(alien);
+            alienArray.push({
+                x: alienX + c * alienWidth,
+                y: alienY + r * alienHeight,
+                width: alienWidth,
+                height: alienHeight,
+                alive: true
+            });
         }
     }
     alienCount = alienArray.length;
 }
 
-function shoot(e) {
-    if (gameOver) {
-        return;
-    }
-
-    if (e.code == "Space") {
-        //shoot
-        let bullet = {
-            x : ship.x + shipWidth*15/32,
-            y : ship.y,
-            width : tileSize/8,
-            height : tileSize/2,
-            used : false
-        }
-        bulletArray.push(bullet);
-    }
+function detectCollision(a, b) {
+    return a.x < b.x + b.width &&
+           a.x + a.width > b.x &&
+           a.y < b.y + b.height &&
+           a.y + a.height > b.y;
 }
 
-function detectCollision(a, b) {
-    return a.x < b.x + b.width &&   //a's top left corner doesn't reach b's top right corner
-           a.x + a.width > b.x &&   //a's top right corner passes b's top left corner
-           a.y < b.y + b.height &&  //a's top left corner doesn't reach b's bottom left corner
-           a.y + a.height > b.y;    //a's bottom left corner passes b's top left corner
+function nextLevel() {
+    score += alienColumns * alienRows * 100;
+    alienColumns = Math.min(alienColumns + 1, columns / 2 - 2);
+    alienRows = Math.min(alienRows + 1, rows - 4);
+    alienVelocityX += alienVelocityX > 0 ? 0.2 : -0.2;
+    createAliens();
+}
+
+function resizeCanvas() {
+    let scale = Math.min(window.innerWidth / boardWidth, window.innerHeight / boardHeight);
+    board.style.width = boardWidth * scale + "px";
+    board.style.height = boardHeight * scale + "px";
+}
+
+function displayGameOver() {
+    context.fillStyle = "rgba(0, 0, 0, 0.7)";
+    context.fillRect(0, 0, board.width, board.height);
+    context.fillStyle = "white";
+    context.font = "40px Arial";
+    context.fillText("Game Over", board.width / 2 - 100, board.height / 2);
+
+    let restartBtn = document.createElement("button");
+    restartBtn.textContent = "Reiniciar";
+    restartBtn.style.position = "absolute";
+    restartBtn.style.top = "50%";
+    restartBtn.style.left = "50%";
+    restartBtn.style.transform = "translate(-50%, -50%)";
+    document.body.appendChild(restartBtn);
+
+    restartBtn.addEventListener("click", restartGame);
+}
+
+function restartGame() {
+    document.location.reload();
 }
