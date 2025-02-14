@@ -1,6 +1,6 @@
 // Configuración del tablero
 let tileSize = 32;
-let rows = 16;
+let rows = 20;
 let columns = 16;
 
 let board, context;
@@ -186,21 +186,43 @@ function resizeCanvas() {
 }
 
 function displayGameOver() {
-    context.fillStyle = "rgba(0, 0, 0, 0.7)";
-    context.fillRect(0, 0, board.width, board.height);
-    context.fillStyle = "white";
-    context.font = "40px Arial";
-    context.fillText("Game Over", board.width / 2 - 100, board.height / 2);
+    // Crear un contenedor para centrar todo
+    let gameOverContainer = document.createElement("div");
+    gameOverContainer.style.position = "absolute";
+    gameOverContainer.style.top = "50%";
+    gameOverContainer.style.left = "50%";
+    gameOverContainer.style.transform = "translate(-50%, -140%)";
+    gameOverContainer.style.textAlign = "center";
+    gameOverContainer.style.background = "rgba(0, 0, 0, 0.8)";
+    gameOverContainer.style.padding = "20px";
+    gameOverContainer.style.borderRadius = "10px";
+    gameOverContainer.style.color = "white";
 
+    // Crear el texto de "Game Over"
+    let gameOverText = document.createElement("h2");
+    gameOverText.textContent = "Game Over";
+    gameOverText.style.marginBottom = "20px";
+
+    // Crear el botón de reinicio
     let restartBtn = document.createElement("button");
     restartBtn.textContent = "Reiniciar";
-    restartBtn.style.position = "absolute";
-    restartBtn.style.top = "50%";
-    restartBtn.style.left = "50%";
-    restartBtn.style.transform = "translate(-50%, -50%)";
-    document.body.appendChild(restartBtn);
+    restartBtn.style.backgroundColor = "#333";
+    restartBtn.style.color = "white";
+    restartBtn.style.border = "none";
+    restartBtn.style.padding = "15px 30px";
+    restartBtn.style.fontSize = "20px";
+    restartBtn.style.borderRadius = "10px";
+    restartBtn.style.cursor = "pointer";
 
+    // Agregar evento al botón
     restartBtn.addEventListener("click", restartGame);
+
+    // Añadir elementos al contenedor
+    gameOverContainer.appendChild(gameOverText);
+    gameOverContainer.appendChild(restartBtn);
+
+    // Añadir el contenedor al body
+    document.body.appendChild(gameOverContainer);
 }
 
 function restartGame() {

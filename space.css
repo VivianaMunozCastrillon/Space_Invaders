@@ -5,19 +5,16 @@ body {
     color: white;
 }
 
+
+
 #board {
     display: block;
     margin: auto;
     background-color: black;
     border-bottom: 2px solid white;
+    height:100vh;
 }
 
-.controls {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-}
 
 button {
     background-color: #333;
@@ -31,4 +28,24 @@ button {
 
 button:active {
     background-color: #555;
+}
+
+
+/* Ocultar los botones en pantallas grandes (PC) */
+@media (min-width: 768px) {
+    #controls {
+        display: none;
+    }
+}
+
+/* Mostrar los botones solo en dispositivos móviles */
+@media (max-width: 767px) {
+    #controls {
+        display: flex;
+        justify-content: center;
+        padding-left: 40px;
+        gap: 50px;
+        margin-top: 10px;
+        margin-left: -20px;
+    }
 }
